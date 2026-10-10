@@ -1,0 +1,10 @@
+fastapi>=0.115,<1.0
+uvicorn[standard]>=0.30
+python-multipart>=0.0.9
+python-dotenv>=1.0
+pypdf>=4.0
+numpy>=1.26
+turbovec==1.1.2
+sentence-transformers>=2.7
+langchain>=1.0
+groq>=0.9

@@ -1,4 +1,4 @@
-<script setup>
+﻿<script setup>
 import { ref, shallowRef, computed, watch, nextTick, onMounted, onBeforeUnmount } from 'vue'
 import { renderMarkdown, canSend, validateUpload, createChatSocket, RATE_LIMIT_MESSAGE } from './lib/chat.js'
 
@@ -12,13 +12,15 @@ const API = envAPI || (DEV ? 'http://localhost:8000' : '')
 
 function resolveWsUrl() {
   if (import.meta.env.VITE_WS_URL) return import.meta.env.VITE_WS_URL
-  const scheme = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-  return `${scheme}//${window.location.host}/ws/chat`
+  const base = API || window.location.origin
+  const parsed = new URL(base, window.location.origin)
+  const scheme = parsed.protocol === 'https:' ? 'wss:' : 'ws:'
+  return `${scheme}//${parsed.host}/ws/chat`
 }
 const WS_URL = resolveWsUrl()
 
-/* ---------------- Session state (no persistence — SRS 3.1) ---------------- */
-const messages = ref([]) // session only — refresh clears history
+/* ---------------- Session state (no persistence â€” SRS 3.1) ---------------- */
+const messages = ref([]) // session only â€” refresh clears history
 const input = ref('')
 const isGenerating = ref(false)
 const uploaded = ref([])
@@ -121,7 +123,7 @@ async function handleFile(file) {
   const err = validateUpload(file)
   if (err) { uploadState.value = 'error'; uploadStatus.value = err; return }
   uploadState.value = 'uploading'
-  uploadStatus.value = `Uploading ${file.name}…`
+  uploadStatus.value = `Uploading ${file.name}â€¦`
   const form = new FormData(); form.append('file', file)
   try {
     const res = await fetch(`${API}/upload`, { method: 'POST', body: form })
@@ -149,7 +151,7 @@ async function removeDocument(entry) {
   if (removing.value || isGenerating.value) return
   removing.value = name
   uploadState.value = 'uploading'
-  uploadStatus.value = `Removing ${name}…`
+  uploadStatus.value = `Removing ${name}â€¦`
   try {
     const res = await fetch(`${API}/documents/${encodeURIComponent(name)}`, { method: 'DELETE' })
     const body = await res.json().catch(() => ({}))
@@ -160,7 +162,7 @@ async function removeDocument(entry) {
       selectedDocument.value = uploaded.value.length > 0 ? uploaded.value[0].filename : ''
     }
     uploadState.value = 'success'
-    uploadStatus.value = `Removed ${name} (${body.chunks_removed} chunks). ${fileCount.value} file${fileCount.value === 1 ? '' : 's'} · ${totalChunks.value} chunks`
+    uploadStatus.value = `Removed ${name} (${body.chunks_removed} chunks). ${fileCount.value} file${fileCount.value === 1 ? '' : 's'} Â· ${totalChunks.value} chunks`
   } catch (e) {
     uploadState.value = 'error'
     uploadStatus.value = `${name}: ${e.message}`
@@ -309,7 +311,7 @@ const vEnhance = { mounted: decorateCodeBlocks, updated: decorateCodeBlocks }
         <section aria-labelledby="docs-heading">
           <div class="flex items-center justify-between gap-2 px-1.5 pb-2 pt-1">
             <h2 id="docs-heading" class="section-label">Documents</h2>
-            <span v-if="fileCount" class="mono-meta truncate">{{ fileCount }} file{{ fileCount === 1 ? '' : 's' }} · {{ totalChunks }} chunks</span>
+            <span v-if="fileCount" class="mono-meta truncate">{{ fileCount }} file{{ fileCount === 1 ? '' : 's' }} Â· {{ totalChunks }} chunks</span>
           </div>
 
           <div class="rounded-panel border border-edge bg-panel p-2.5 shadow-panel">
@@ -324,7 +326,7 @@ const vEnhance = { mounted: decorateCodeBlocks, updated: decorateCodeBlocks }
               <div class="pointer-events-none flex flex-col items-center px-3 py-4 text-center">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="text-brand-soft" aria-hidden="true"><path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5"/><path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
                 <p class="mt-1.5 text-[12px] font-medium text-ink-2">Drop technical documents</p>
-                <p class="mt-0.5 font-mono text-[10.5px] tracking-wide text-ink-4">PDF · TXT · MD · max 5 MB</p>
+                <p class="mt-0.5 font-mono text-[10.5px] tracking-wide text-ink-4">PDF Â· TXT Â· MD Â· max 5 MB</p>
                 <span class="mt-2.5 inline-flex items-center gap-1.5 rounded-control border border-edge bg-raised px-2.5 py-1 font-mono text-[10.5px] font-medium uppercase tracking-wider text-ink-2">
                   <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2z"/></svg>
                   Browse files
@@ -345,7 +347,7 @@ const vEnhance = { mounted: decorateCodeBlocks, updated: decorateCodeBlocks }
               <div class="relative h-[3px] overflow-hidden rounded-full bg-raised">
                 <div class="animate-pulse-line absolute inset-y-0 w-1/2 rounded-full bg-brand/70"></div>
               </div>
-              <p class="mt-1.5 font-mono text-[10px] tracking-wide text-ink-4">chunking + indexing for retrieval…</p>
+              <p class="mt-1.5 font-mono text-[10px] tracking-wide text-ink-4">chunking + indexing for retrievalâ€¦</p>
             </div>
 
             <!-- Indexed documents -->
@@ -385,7 +387,7 @@ const vEnhance = { mounted: decorateCodeBlocks, updated: decorateCodeBlocks }
           <dl class="space-y-1 rounded-panel border border-edge bg-panel px-2.5 py-2 font-mono text-[10.5px]">
             <div class="flex items-center justify-between gap-2">
               <dt class="text-ink-4">index</dt>
-              <dd class="text-ink-2">{{ fileCount }} files · {{ totalChunks }} chunks</dd>
+              <dd class="text-ink-2">{{ fileCount }} files Â· {{ totalChunks }} chunks</dd>
             </div>
             <div class="flex items-center justify-between gap-2">
               <dt class="text-ink-4">retrieval</dt>
@@ -417,7 +419,7 @@ const vEnhance = { mounted: decorateCodeBlocks, updated: decorateCodeBlocks }
         <div class="min-w-0 flex-1">
           <p class="truncate text-[13px] font-semibold leading-tight text-ink">Chat workspace</p>
           <p class="truncate font-mono text-[10.5px] leading-tight text-ink-4">
-            {{ selectedDocument ? `Chatting with: ${selectedDocument}` : fileCount ? `${totalChunks} chunks indexed from ${fileCount} file${fileCount === 1 ? '' : 's'} — select a document to chat` : 'no documents indexed yet' }}
+            {{ selectedDocument ? `Chatting with: ${selectedDocument}` : fileCount ? `${totalChunks} chunks indexed from ${fileCount} file${fileCount === 1 ? '' : 's'} â€” select a document to chat` : 'no documents indexed yet' }}
           </p>
         </div>
 
@@ -454,7 +456,7 @@ const vEnhance = { mounted: decorateCodeBlocks, updated: decorateCodeBlocks }
 
             <p class="mt-6 pb-3 font-mono text-[11px] text-ink-4">
               <span class="text-signal-soft">$</span> index a document, then run
-              <span class="text-ink-3">“Analyze the uploaded documents”</span>
+              <span class="text-ink-3">â€œAnalyze the uploaded documentsâ€</span>
             </p>
           </div>
 
@@ -483,7 +485,7 @@ const vEnhance = { mounted: decorateCodeBlocks, updated: decorateCodeBlocks }
                   <div v-if="m.content" class="markdown-body" v-enhance v-html="renderMarkdown(m.content)"></div>
                   <div v-else class="flex items-center gap-2.5 py-1" role="status" aria-label="DevAssist is generating a response">
                     <span class="typing-dots flex items-center gap-1.5"><span></span><span></span><span></span></span>
-                    <span class="font-mono text-[11.5px] text-ink-4">DevAssist is thinking…</span>
+                    <span class="font-mono text-[11.5px] text-ink-4">DevAssist is thinkingâ€¦</span>
                   </div>
                 </div>
               </div>
@@ -497,7 +499,7 @@ const vEnhance = { mounted: decorateCodeBlocks, updated: decorateCodeBlocks }
         <form class="mx-auto w-full max-w-[860px]" @submit.prevent="send">
           <div class="flex items-end gap-2 rounded-panel border border-edge bg-raised p-2 shadow-panel transition focus-within:border-brand/60 focus-within:shadow-focus-brand">
             <textarea ref="inputEl" v-model="input" data-testid="chat-input" rows="2"
-              placeholder="Ask DevAssist about your code…" aria-label="Message DevAssist"
+              placeholder="Ask DevAssist about your codeâ€¦" aria-label="Message DevAssist"
               class="max-h-40 min-h-[42px] flex-1 resize-none bg-transparent px-2 py-1.5 text-[14px] leading-6 text-ink outline-none placeholder:text-ink-4"
               @keydown.enter.exact.prevent="send"></textarea>
             <button data-testid="send-button" type="submit" :disabled="!canSend(input, isGenerating)"
@@ -505,11 +507,11 @@ const vEnhance = { mounted: decorateCodeBlocks, updated: decorateCodeBlocks }
               :aria-label="isGenerating ? 'Generating response, please wait' : 'Send message'">
               <svg v-if="isGenerating" class="animate-spin" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M12 3a9 9 0 1 0 9 9"/></svg>
               <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5m0 0-6 6m6-6 6 6"/></svg>
-              <span class="sr-only">{{ isGenerating ? 'Generating…' : 'Send' }}</span>
+              <span class="sr-only">{{ isGenerating ? 'Generatingâ€¦' : 'Send' }}</span>
             </button>
           </div>
           <div class="mt-1.5 flex items-center justify-between gap-3 px-0.5 font-mono text-[10.5px] text-ink-4">
-            <span>Enter to send · Shift + Enter for a new line</span>
+            <span>Enter to send Â· Shift + Enter for a new line</span>
             <span class="hidden sm:inline">programming questions only</span>
           </div>
         </form>
