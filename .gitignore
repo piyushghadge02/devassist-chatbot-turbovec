@@ -3,15 +3,23 @@
 **/.env
 *.key
 *.pem
+!.env.example
+
 # Python
 __pycache__/
 *.py[cod]
 .venv/
 venv/
 .pytest_cache/
+
 # Node
 node_modules/
 dist/
+
+# Backups
+*.bak
+backend-backup/
+
 # OS / temp
 .DS_Store
 *.log
